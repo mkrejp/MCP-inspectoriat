@@ -11,6 +11,7 @@
     "inspect:brave-search": "node scripts/start-inspector.mjs brave-search",
     "inspect:fetch": "node scripts/start-inspector.mjs fetch",
     "inspect:sequential-thinking": "node scripts/start-inspector.mjs sequential-thinking",
+    "inspect:fastmcp-aggregator": "node scripts/start-inspector.mjs fastmcp-aggregator",
     "dashboard": "node scripts/dashboard-server.mjs",
     "start": "node scripts/dashboard-server.mjs"
   },

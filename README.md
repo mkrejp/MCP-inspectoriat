@@ -46,9 +46,9 @@ npm start
 
 The Inspector UI runs on port 5173 and the dashboard on port 4173. In the
 dashboard, choose GitHub, PostgreSQL, Brave Search, Fetch, Sequential Thinking,
-or the configured remote endpoint. Selecting a profile stops the previous
-Inspector and monitor connection, starts the selected server, resets capability
-statistics, and records the transition in Application activity.
+FastMCP aggregator, or the configured remote endpoint. Selecting a profile stops
+the previous Inspector and monitor connection, starts the selected server,
+resets capability statistics, and records the transition in Application activity.
 
 The devcontainer forwards both ports and opens the Inspector UI automatically.
 For a one-off target override, set `REMOTE_MCP_URL` and `MCP_TRANSPORT` before
@@ -64,6 +64,7 @@ npm run inspect:postgres
 npm run inspect:brave-search
 npm run inspect:fetch
 npm run inspect:sequential-thinking
+npm run inspect:fastmcp-aggregator
 ```
 
 You can also use the generic router:
@@ -73,8 +74,9 @@ npm run inspect:profile -- github
 ```
 
 `configs/profiles.json` is the master profile list used by the dashboard and
-launcher. Each profile is read-only to Inspector and launches one stdio server
-with `npx -y`.
+launcher. Each profile is read-only to Inspector. Local stdio profiles launch
+one server with `npx -y`; the FastMCP aggregator profile connects over
+Streamable HTTP to the Railway-hosted endpoint.
 
 The requested `@modelcontextprotocol/server-fetch` package currently returns
 npm 404 (checked 2026-10-30). Its profile is included as specified, but it will
