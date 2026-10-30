@@ -1,5 +1,6 @@
 import { createServer } from "node:http";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import {
   Client,
   SSEClientTransport,
@@ -17,7 +18,9 @@ import {
 import { saveStoredCredentials } from "./credentials-store.mjs";
 import { redactUrl } from "./targets.mjs";
 
-const port = Number(process.env.DASHBOARD_PORT || 4173);
+// Prefer DASHBOARD_PORT so Railway public domains pinned to 4173 keep working
+// even when the platform injects PORT=8080.
+const port = Number(process.env.DASHBOARD_PORT || process.env.PORT || 4173);
 const host = process.env.DASHBOARD_HOST || process.env.HOST || "127.0.0.1";
 const pollIntervalMs = 15_000;
 const retryDelayMs = 60_000;
@@ -25,6 +28,28 @@ const probeTimeoutMs = 10_000;
 const page = await readFile(new URL("../public/dashboard.html", import.meta.url), "utf8");
 
 await loadLocalEnv();
+
+async function ensurePersistentDataDirs() {
+  const dataRoot = process.env.RAILWAY_VOLUME_MOUNT_PATH || "/data";
+  const storageDir = process.env.MCP_STORAGE_DIR || `${dataRoot}/mcp-inspector`;
+  const secretFile = process.env.MCP_INSPECTOR_SECRET_FILE || `${dataRoot}/secrets.json`;
+  const credentialsFile = process.env.MCP_CREDENTIALS_FILE || `${dataRoot}/credentials.enc`;
+  const directories = new Set([storageDir, dirname(secretFile), dirname(credentialsFile)]);
+
+  for (const directory of directories) {
+    try {
+      await mkdir(directory, { recursive: true, mode: 0o700 });
+    } catch (error) {
+      if (["EACCES", "EPERM", "EROFS"].includes(error.code)) {
+        console.warn(`Unable to prepare persistent data directory ${directory}: ${error.message}`);
+        continue;
+      }
+      throw error;
+    }
+  }
+}
+
+await ensurePersistentDataDirs();
 const profileManifest = await getProfileManifest();
 const eventLog = [];
 let activeProfile = null;
