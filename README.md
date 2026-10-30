@@ -104,8 +104,16 @@ For Railway, attach a persistent volume mounted at `/data` and add
 `CREDENTIALS_ENCRYPTION_KEY` as a Railway service variable. Generate the key
 locally with `openssl rand -hex 32`, then enter it directly in Railway's secret
 settings; do not commit it or put it in a Docker build argument. Keep both the
-volume and the key when redeploying. The Docker image already uses
-`/data/credentials.enc` for its encrypted credential store.
+volume and the key when redeploying. The Docker image stores durable data on
+the volume:
+
+- dashboard credentials: `/data/credentials.enc`
+- Inspector secrets/storage: `/data/secrets.json` and `/data/mcp-inspector`
+
+Point the public domain at container port `4173` (dashboard). The Inspector UI
+still binds `5173` internally. Set `ALLOWED_ORIGINS` to the public HTTPS origin
+and keep `MCP_INSPECTOR_SECRET_STORE=file` so secrets are not kept in memory
+only.
 
 Put an authenticating reverse proxy or private network in front of **both**
 ports. Inspector can invoke tools on the selected server, and the dashboard can

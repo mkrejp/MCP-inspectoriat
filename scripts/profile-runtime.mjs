@@ -109,19 +109,37 @@ export async function prepareProfile(profileId) {
 export function inspectorEnvironment() {
   const clientPort = process.env.CLIENT_PORT || "5173";
   const env = { ...process.env, CLIENT_PORT: clientPort };
+  const dataRoot = process.env.RAILWAY_VOLUME_MOUNT_PATH || "/data";
+
+  env.HOST ||= "0.0.0.0";
+  env.DANGEROUSLY_BIND_ALL_INTERFACES ||= "true";
+  env.MCP_INSPECTOR_SECRET_STORE ||= "file";
+  env.MCP_STORAGE_DIR ||= `${dataRoot}/mcp-inspector`;
+  env.MCP_INSPECTOR_SECRET_FILE ||= `${dataRoot}/secrets.json`;
+  if (!env.MCP_INSPECTOR_SECRET_KEY && env.CREDENTIALS_ENCRYPTION_KEY) {
+    env.MCP_INSPECTOR_SECRET_KEY = env.CREDENTIALS_ENCRYPTION_KEY;
+  }
+
+  const publicOrigins = [
+    process.env.RAILWAY_PUBLIC_DOMAIN && `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`,
+    process.env.RAILWAY_STATIC_URL && `https://${process.env.RAILWAY_STATIC_URL}`,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+  ].filter(Boolean);
 
   if (process.env.CODESPACE_NAME) {
-    env.HOST ||= "0.0.0.0";
-    env.DANGEROUSLY_BIND_ALL_INTERFACES ||= "true";
-
     const forwardingDomain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
-    if (!env.ALLOWED_ORIGINS && forwardingDomain) {
-      env.ALLOWED_ORIGINS = [
+    if (forwardingDomain) {
+      publicOrigins.unshift(
         `https://${process.env.CODESPACE_NAME}-${clientPort}.${forwardingDomain}`,
         `http://localhost:${clientPort}`,
         `http://127.0.0.1:${clientPort}`,
-      ].join(",");
+      );
     }
+  }
+
+  if (!env.ALLOWED_ORIGINS && publicOrigins.length > 0) {
+    env.ALLOWED_ORIGINS = [...new Set(publicOrigins)].join(",");
   }
 
   return env;
