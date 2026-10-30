@@ -54,6 +54,16 @@
         font-size: 13px;
       }
       .top-meta { display: flex; align-items: center; gap: 18px; color: var(--muted); font-size: 12px; }
+      .signed-in-user { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-weight: 600; }
+      .logout-button {
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: var(--ink);
+        background: var(--surface);
+        cursor: pointer;
+      }
+      .logout-button:hover { border-color: #b7c4ba; }
       .live-indicator { display: inline-flex; align-items: center; gap: 7px; }
       .dot { width: 8px; height: 8px; border-radius: 50%; background: #98a49e; }
       .dot.live { background: var(--green); box-shadow: 0 0 0 3px #dcebe1; }
@@ -216,6 +226,8 @@
         <div class="brand"><span class="mark">M</span><span>MCP MONITOR</span></div>
         <div class="top-meta">
           <span class="inspector-port">Inspector UI · 5173</span>
+          <span id="signed-in-user" class="signed-in-user" hidden></span>
+          <button id="logout-button" type="button" class="logout-button" hidden>Log out</button>
           <span class="live-indicator"><span id="live-dot" class="dot"></span><span id="refresh-state">Starting checks</span></span>
         </div>
       </header>
@@ -393,8 +405,38 @@
             : "No API credentials required.";
       }
 
+      function redirectToLogin() {
+        window.location.href = "/login";
+      }
+
+      async function fetchAuthed(url, options) {
+        const response = await fetch(url, options);
+        if (response.status === 401) {
+          redirectToLogin();
+          throw new Error("Authentication required.");
+        }
+        return response;
+      }
+
+      async function loadMe() {
+        const response = await fetchAuthed("/api/me", { cache: "no-store" });
+        if (!response.ok) throw new Error(`Session API returned ${response.status}`);
+        const user = await response.json();
+        const label = byId("signed-in-user");
+        const logout = byId("logout-button");
+        label.hidden = false;
+        label.textContent = user.role === "admin" ? `${user.email} · admin` : user.email;
+        label.title = user.email;
+        logout.hidden = false;
+      }
+
+      async function logout() {
+        await fetch("/auth/logout", { method: "POST", credentials: "same-origin" });
+        redirectToLogin();
+      }
+
       async function loadProfiles() {
-        const response = await fetch("/api/profiles", { cache: "no-store" });
+        const response = await fetchAuthed("/api/profiles", { cache: "no-store" });
         if (!response.ok) throw new Error(`Profiles API returned ${response.status}`);
         const data = await response.json();
         profiles = data.profiles;
@@ -442,14 +484,14 @@
       }
 
       async function loadLogs() {
-        const response = await fetch("/api/logs", { cache: "no-store" });
+        const response = await fetchAuthed("/api/logs", { cache: "no-store" });
         if (!response.ok) throw new Error(`Activity API returned ${response.status}`);
         renderLogs((await response.json()).logs);
       }
 
       async function refresh() {
         try {
-          const response = await fetch("/api/status", { cache: "no-store" });
+          const response = await fetchAuthed("/api/status", { cache: "no-store" });
           if (!response.ok) throw new Error(`Status API returned ${response.status}`);
           const data = await response.json();
           const summary = data.summary;
@@ -503,7 +545,7 @@
         byId("profile-feedback").className = "profile-feedback";
         byId("profile-feedback").textContent = "Stopping the previous server and reconnecting...";
         try {
-          const response = await fetch("/api/profile", {
+          const response = await fetchAuthed("/api/profile", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ profileId: nextProfileId }),
@@ -572,7 +614,7 @@
         byId("credential-error").textContent = "";
 
         try {
-          const response = await fetch("/api/credentials", {
+          const response = await fetchAuthed("/api/credentials", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ profileId: credentialProfileId, credentials: credentialValues }),
@@ -603,12 +645,14 @@
       profileSelect.addEventListener("change", switchProfile);
       credentialsForm.addEventListener("submit", submitCredentials);
       byId("credential-cancel").addEventListener("click", cancelCredentials);
+      byId("logout-button").addEventListener("click", () => void logout());
       credentialDialog.addEventListener("close", () => {
         credentialsForm.reset();
         credentialProfileId = null;
         profileSelect.value = selectedProfileId || "";
       });
-      loadProfiles()
+      loadMe()
+        .then(() => loadProfiles())
         .then(() => Promise.all([refresh(), loadLogs()]))
         .catch((error) => {
           byId("refresh-state").textContent = "Dashboard unavailable";

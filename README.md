@@ -21,7 +21,21 @@ outside git. The `.env` template also includes the optional remote endpoint:
 CREDENTIALS_ENCRYPTION_KEY=<64-character-hex-secret>
 REMOTE_MCP_URL=http://localhost:3000/sse
 MCP_TRANSPORT=sse
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_ALLOWED_EMAILS=marek.krejpsky@gmail.com
+GOOGLE_ADMIN_EMAILS=marek.krejpsky@gmail.com
+PUBLIC_BASE_URL=https://maigret.animarium.ai
 ```
+
+The dashboard frontend is gated by Google OAuth. Create a Google Cloud OAuth
+**Web application** client and set the authorized redirect URI to
+`{PUBLIC_BASE_URL}/auth/google/callback` (for production,
+`https://maigret.animarium.ai/auth/google/callback`, plus a localhost URI for
+local development). Only emails listed in `GOOGLE_ALLOWED_EMAILS` can sign in.
+`marek.krejpsky@gmail.com` is always treated as an admin and is always allowed.
+Additional admins can be listed in `GOOGLE_ADMIN_EMAILS`. Session cookies are
+signed with `CREDENTIALS_ENCRYPTION_KEY` (or `SESSION_SECRET` if you set one).
 
 When a selected profile needs credentials, the dashboard opens a password
 dialog. Values are encrypted with AES-256-GCM and saved to
@@ -120,7 +134,10 @@ listener. The Inspector UI still binds `5173` internally. Set
 `MCP_INSPECTOR_SECRET_KEY=${{CREDENTIALS_ENCRYPTION_KEY}}` so secrets on
 `/data/secrets.json` are encrypted.
 
-Put an authenticating reverse proxy or private network in front of **both**
-ports. Inspector can invoke tools on the selected server, and the dashboard can
-switch among its configured profiles and accept credentials; neither should be
-exposed publicly without HTTPS and access control.
+On Railway, set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`,
+`GOOGLE_ALLOWED_EMAILS`, `GOOGLE_ADMIN_EMAILS`, and
+`PUBLIC_BASE_URL=https://maigret.animarium.ai` on the MCP-inspectoriat service.
+The public dashboard at port `4173` requires Google login. Keep the Inspector UI
+on `5173` private (it is not mapped to the custom domain). Inspector can invoke
+tools on the selected server, so do not expose that port publicly without
+additional access control.
