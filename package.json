@@ -1,0 +1,27 @@
+{
+  "name": "mcp-inspectoriat",
+  "version": "1.0.0",
+  "description": "Web client for inspecting a remote MCP server over SSE",
+  "main": "index.js",
+  "scripts": {
+    "inspect:remote": "node scripts/start-inspector.mjs",
+    "dashboard": "node scripts/dashboard-server.mjs",
+    "start": "node scripts/start-workspace.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mkrejp/MCP-inspectoriat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/mkrejp/MCP-inspectoriat/issues"
+  },
+  "homepage": "https://github.com/mkrejp/MCP-inspectoriat#readme",
+  "dependencies": {
+    "@modelcontextprotocol/client": "^2.4.0",
+    "@modelcontextprotocol/inspector": "^2.13.0"
+  }
+}
