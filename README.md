@@ -110,10 +110,13 @@ the volume:
 - dashboard credentials: `/data/credentials.enc`
 - Inspector secrets/storage: `/data/secrets.json` and `/data/mcp-inspector`
 
-Point the public domain at container port `4173` (dashboard). The Inspector UI
-still binds `5173` internally. Set `ALLOWED_ORIGINS` to the public HTTPS origin
-and keep `MCP_INSPECTOR_SECRET_STORE=file` so secrets are not kept in memory
-only.
+Point the public domain at container port `4173` (dashboard) and set
+`PORT=4173` / `DASHBOARD_PORT=4173` so Railway healthchecks hit the same
+listener. The Inspector UI still binds `5173` internally. Set
+`ALLOWED_ORIGINS` to the public HTTPS origin, keep
+`MCP_INSPECTOR_SECRET_STORE=file`, and set
+`MCP_INSPECTOR_SECRET_KEY=${{CREDENTIALS_ENCRYPTION_KEY}}` so secrets on
+`/data/secrets.json` are encrypted.
 
 Put an authenticating reverse proxy or private network in front of **both**
 ports. Inspector can invoke tools on the selected server, and the dashboard can
