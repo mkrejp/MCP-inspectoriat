@@ -18,6 +18,5 @@ ENV HOST=0.0.0.0 \
     MCP_CREDENTIALS_FILE=/data/credentials.enc
 
 EXPOSE 5173 4173
-VOLUME ["/data"]
 
 CMD ["npm", "start"]
