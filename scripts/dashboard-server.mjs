@@ -17,6 +17,25 @@ import {
 } from "./profile-runtime.mjs";
 import { saveStoredCredentials } from "./credentials-store.mjs";
 import { redactUrl } from "./targets.mjs";
+import {
+  authorizeUser,
+  buildGoogleAuthorizeUrl,
+  clearOAuthStateCookieHeader,
+  clearSessionCookieHeader,
+  createOAuthState,
+  createSessionToken,
+  exchangeGoogleCode,
+  fetchGoogleUserInfo,
+  getAuthConfig,
+  isSecureRequest,
+  oauthStateCookieHeader,
+  parseCookies,
+  readSession,
+  resolvePublicOrigin,
+  sessionCookieHeader,
+  verifyOAuthState,
+  OAUTH_STATE_COOKIE,
+} from "./google-auth.mjs";
 
 // Prefer DASHBOARD_PORT so Railway public domains pinned to 4173 keep working
 // even when the platform injects PORT=8080.
@@ -26,8 +45,10 @@ const pollIntervalMs = 15_000;
 const retryDelayMs = 60_000;
 const probeTimeoutMs = 10_000;
 const page = await readFile(new URL("../public/dashboard.html", import.meta.url), "utf8");
+const loginPage = await readFile(new URL("../public/login.html", import.meta.url), "utf8");
 
 await loadLocalEnv();
+const authConfig = getAuthConfig();
 
 async function ensurePersistentDataDirs() {
   const dataRoot = process.env.RAILWAY_VOLUME_MOUNT_PATH || "/data";
@@ -356,9 +377,172 @@ function isSameOrigin(request) {
   }
 }
 
+function sendHtml(response, status, html, headers = {}) {
+  response.writeHead(status, {
+    "Cache-Control": "no-store",
+    "Content-Type": "text/html; charset=utf-8",
+    ...headers,
+  });
+  response.end(html);
+}
+
+function redirect(response, location, headers = {}) {
+  response.writeHead(302, { Location: location, "Cache-Control": "no-store", ...headers });
+  response.end();
+}
+
+function appendSetCookie(headers, cookie) {
+  const existing = headers["Set-Cookie"];
+  if (!existing) {
+    headers["Set-Cookie"] = cookie;
+    return headers;
+  }
+  headers["Set-Cookie"] = Array.isArray(existing) ? [...existing, cookie] : [existing, cookie];
+  return headers;
+}
+
+function requireAuth(request, response, pathname) {
+  const session = readSession(request, authConfig);
+  if (session) return session;
+
+  if (request.method === "GET" && !pathname.startsWith("/api/")) {
+    redirect(response, "/login");
+  } else {
+    sendJson(response, 401, { error: "Authentication required." });
+  }
+  return null;
+}
+
+function authUnavailablePage() {
+  return `<!doctype html>
+<html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sign-in unavailable</title></head>
+<body style="font-family: system-ui, sans-serif; max-width: 36rem; margin: 4rem auto; padding: 0 1.25rem;">
+<h1>Sign-in unavailable</h1>
+<p>Google OAuth is not configured. Set <code>GOOGLE_CLIENT_ID</code>, <code>GOOGLE_CLIENT_SECRET</code>, and a session secret (<code>CREDENTIALS_ENCRYPTION_KEY</code> or <code>SESSION_SECRET</code>).</p>
+</body></html>`;
+}
+
 const server = createServer(async (request, response) => {
-  const pathname = new URL(request.url, `http://${request.headers.host}`).pathname;
+  const requestUrl = new URL(request.url, `http://${request.headers.host}`);
+  const pathname = requestUrl.pathname;
   response.setHeader("X-Content-Type-Options", "nosniff");
+  const secure = isSecureRequest(request);
+
+  if (request.method === "GET" && pathname === "/login") {
+    if (!authConfig.configured) {
+      sendHtml(response, 503, authUnavailablePage());
+      return;
+    }
+    const session = readSession(request, authConfig);
+    if (session) {
+      redirect(response, "/");
+      return;
+    }
+    sendHtml(response, 200, loginPage);
+    return;
+  }
+
+  if (request.method === "GET" && pathname === "/auth/google") {
+    if (!authConfig.configured) {
+      sendHtml(response, 503, authUnavailablePage());
+      return;
+    }
+    try {
+      const origin = resolvePublicOrigin(request);
+      const redirectUri = `${origin}/auth/google/callback`;
+      const { nonce, token } = createOAuthState(authConfig.sessionSecret);
+      const location = buildGoogleAuthorizeUrl({
+        clientId: authConfig.clientId,
+        redirectUri,
+        state: nonce,
+      });
+      redirect(response, location, {
+        "Set-Cookie": oauthStateCookieHeader(token, { secure }),
+      });
+    } catch (error) {
+      sendJson(response, 500, { error: safeMessage(error.message) });
+    }
+    return;
+  }
+
+  if (request.method === "GET" && pathname === "/auth/google/callback") {
+    if (!authConfig.configured) {
+      sendHtml(response, 503, authUnavailablePage());
+      return;
+    }
+    const clearState = clearOAuthStateCookieHeader({ secure });
+    try {
+      const code = requestUrl.searchParams.get("code");
+      const state = requestUrl.searchParams.get("state");
+      const cookies = parseCookies(request.headers.cookie);
+      const expectedNonce = verifyOAuthState(cookies[OAUTH_STATE_COOKIE], authConfig.sessionSecret);
+      if (!code || !state || !expectedNonce || state !== expectedNonce) {
+        response.writeHead(400, { "Content-Type": "text/plain; charset=utf-8", "Set-Cookie": clearState });
+        response.end("Invalid OAuth state.");
+        return;
+      }
+
+      const origin = resolvePublicOrigin(request);
+      const redirectUri = `${origin}/auth/google/callback`;
+      const tokens = await exchangeGoogleCode({
+        clientId: authConfig.clientId,
+        clientSecret: authConfig.clientSecret,
+        code,
+        redirectUri,
+      });
+      const userInfo = await fetchGoogleUserInfo(tokens.access_token);
+      const authorized = authorizeUser(userInfo, authConfig);
+      if (!authorized.ok) {
+        response.writeHead(authorized.status, {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Set-Cookie": clearState,
+        });
+        response.end(authorized.error);
+        return;
+      }
+
+      const sessionToken = createSessionToken(authorized.user, authConfig.sessionSecret);
+      const headers = appendSetCookie(
+        appendSetCookie({ Location: "/" }, sessionCookieHeader(sessionToken, { secure })),
+        clearState,
+      );
+      response.writeHead(302, { "Cache-Control": "no-store", ...headers });
+      response.end();
+      recordLog("info", "auth.login", `Signed in ${authorized.user.email} (${authorized.user.role}).`);
+    } catch (error) {
+      response.writeHead(502, {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Set-Cookie": clearState,
+      });
+      response.end(safeMessage(error.message));
+    }
+    return;
+  }
+
+  if (request.method === "POST" && pathname === "/auth/logout") {
+    if (!isSameOrigin(request) && request.headers.origin) {
+      sendJson(response, 403, { error: "Logout must come from this dashboard." });
+      return;
+    }
+    redirect(response, "/login", {
+      "Set-Cookie": clearSessionCookieHeader({ secure }),
+    });
+    return;
+  }
+
+  if (request.method === "GET" && pathname === "/api/me") {
+    const session = readSession(request, authConfig);
+    if (!session) {
+      sendJson(response, 401, { error: "Authentication required." });
+      return;
+    }
+    sendJson(response, 200, session);
+    return;
+  }
+
+  const session = requireAuth(request, response, pathname);
+  if (!session) return;
 
   if (request.method === "GET" && pathname === "/api/profiles") {
     sendJson(response, 200, {
@@ -439,11 +623,7 @@ const server = createServer(async (request, response) => {
     return;
   }
   if (request.method === "GET" && (pathname === "/" || pathname === "/index.html")) {
-    response.writeHead(200, {
-      "Cache-Control": "no-store",
-      "Content-Type": "text/html; charset=utf-8",
-    });
-    response.end(page);
+    sendHtml(response, 200, page);
     return;
   }
 
