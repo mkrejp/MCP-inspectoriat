@@ -48,6 +48,14 @@
       "server": "sequential-thinking",
       "config": "sequential-thinking.json",
       "requiredEnv": []
+    },
+    {
+      "id": "fastmcp-aggregator",
+      "name": "FastMCP aggregator",
+      "description": "Connect to the Railway-hosted universal MCP aggregator from FastMCP-testserver.",
+      "server": "fastmcp-aggregator",
+      "config": "fastmcp-aggregator.json",
+      "requiredEnv": []
     }
   ]
 }
