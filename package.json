@@ -4,9 +4,15 @@
   "description": "Web client for inspecting a remote MCP server over SSE",
   "main": "index.js",
   "scripts": {
-    "inspect:remote": "node scripts/start-inspector.mjs",
+    "inspect:remote": "node scripts/start-inspector.mjs remote",
+    "inspect:profile": "node scripts/start-inspector.mjs",
+    "inspect:github": "node scripts/start-inspector.mjs github",
+    "inspect:postgres": "node scripts/start-inspector.mjs postgres",
+    "inspect:brave-search": "node scripts/start-inspector.mjs brave-search",
+    "inspect:fetch": "node scripts/start-inspector.mjs fetch",
+    "inspect:sequential-thinking": "node scripts/start-inspector.mjs sequential-thinking",
     "dashboard": "node scripts/dashboard-server.mjs",
-    "start": "node scripts/start-workspace.mjs"
+    "start": "node scripts/dashboard-server.mjs"
   },
   "repository": {
     "type": "git",

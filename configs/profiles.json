@@ -1,0 +1,53 @@
+{
+  "defaultProfile": "remote",
+  "profiles": [
+    {
+      "id": "remote",
+      "name": "Remote MCP endpoint",
+      "description": "Connect to the configured remote SSE or Streamable HTTP endpoint.",
+      "server": "remote",
+      "config": null,
+      "requiredEnv": []
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "description": "Browse repositories, issues, and pull requests.",
+      "server": "github",
+      "config": "github.json",
+      "requiredEnv": ["GITHUB_PERSONAL_ACCESS_TOKEN"]
+    },
+    {
+      "id": "postgres",
+      "name": "PostgreSQL",
+      "description": "Inspect database schemas and run safe SQL operations.",
+      "server": "postgres",
+      "config": "postgres.json",
+      "requiredEnv": ["DATABASE_URL"]
+    },
+    {
+      "id": "brave-search",
+      "name": "Brave Search",
+      "description": "Search the web through the Brave Search API.",
+      "server": "brave-search",
+      "config": "brave-search.json",
+      "requiredEnv": ["BRAVE_API_KEY"]
+    },
+    {
+      "id": "fetch",
+      "name": "Fetch",
+      "description": "Fetch web pages and convert them to clean markdown.",
+      "server": "fetch",
+      "config": "fetch.json",
+      "requiredEnv": []
+    },
+    {
+      "id": "sequential-thinking",
+      "name": "Sequential Thinking",
+      "description": "Use local tools for structured multi-step reasoning.",
+      "server": "sequential-thinking",
+      "config": "sequential-thinking.json",
+      "requiredEnv": []
+    }
+  ]
+}

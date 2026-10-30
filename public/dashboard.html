@@ -103,11 +103,86 @@
       .server-stat strong { display: block; margin-top: 5px; font-family: ui-monospace, monospace; font-size: 15px; font-weight: 600; }
       .server-info, .error { margin: 11px 0 0; color: var(--muted); font-size: 12px; }
       .error { color: var(--red); }
+      .profile-control {
+        display: grid;
+        grid-template-columns: minmax(190px, 0.6fr) minmax(0, 1.4fr);
+        align-items: center;
+        gap: 20px;
+        padding: 17px 20px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+      }
+      .profile-control label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 11px; text-transform: uppercase; }
+      .profile-control select {
+        width: 100%;
+        min-height: 38px;
+        padding: 0 10px;
+        color: var(--ink);
+        background: #f7f9f6;
+        border: 1px solid #c9d4ca;
+        border-radius: 4px;
+        font: inherit;
+      }
+      .profile-control select:disabled { opacity: 0.65; }
+      .profile-description { display: block; font-size: 13px; font-weight: 600; }
+      .profile-feedback { display: block; margin-top: 5px; color: var(--muted); font-size: 11px; }
+      .profile-feedback.error { color: var(--red); }
+      .credential-dialog {
+        width: min(520px, calc(100vw - 28px));
+        max-height: min(86vh, 760px);
+        padding: 0;
+        color: var(--ink);
+        background: var(--surface);
+        border: 1px solid #bdcbc0;
+        border-radius: 7px;
+        box-shadow: 0 20px 70px #11241c40;
+      }
+      .credential-dialog::backdrop { background: #101c17a8; }
+      .credential-form { display: grid; gap: 16px; padding: 24px; }
+      .credential-form h2 { font-size: 20px; }
+      .credential-form p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+      .credential-fields { display: grid; gap: 13px; }
+      .credential-field label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 650; }
+      .credential-field input {
+        width: 100%;
+        min-height: 40px;
+        padding: 9px 10px;
+        color: var(--ink);
+        background: #f7f9f6;
+        border: 1px solid #c9d4ca;
+        border-radius: 4px;
+        font: 13px ui-monospace, monospace;
+      }
+      .credential-storage-note { padding: 11px 12px; background: #f1f5ef; border-left: 3px solid var(--green); }
+      .credential-storage-note.error { color: var(--red); background: #f8e7e2; border-left-color: var(--red); }
+      .credential-error { min-height: 18px; color: var(--red) !important; }
+      .credential-actions { display: flex; justify-content: flex-end; gap: 9px; }
+      .credential-actions button {
+        min-height: 38px;
+        padding: 0 13px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        color: var(--ink);
+        background: white;
+        cursor: pointer;
+      }
+      .credential-actions button[type="submit"] { color: white; background: var(--forest); border-color: var(--forest); }
+      .credential-actions button:disabled { cursor: not-allowed; opacity: 0.55; }
       .config-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
       .config-item { padding: 15px 16px 15px 0; }
       .config-item span { display: block; color: var(--muted); font-size: 11px; }
       .config-item strong { display: block; margin-top: 5px; font-family: ui-monospace, monospace; font-size: 12px; font-weight: 500; overflow-wrap: anywhere; }
       .empty { padding: 28px; color: var(--muted); text-align: center; background: var(--surface); border: 1px dashed var(--line); border-radius: 6px; }
+      .log-frame { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+      .log-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+      .log-table th { padding: 10px 12px; color: var(--muted); background: #f7f9f6; font-size: 10px; font-weight: 600; text-transform: uppercase; }
+      .log-table td { padding: 9px 12px; border-top: 1px solid #e8ede8; vertical-align: top; }
+      .log-table .log-time, .log-table .log-event { font-family: ui-monospace, monospace; white-space: nowrap; }
+      .log-level { font-size: 10px; font-weight: 700; text-transform: uppercase; }
+      .log-level.error { color: var(--red); }
+      .log-level.warn { color: #966423; }
+      .log-empty { padding: 17px; color: var(--muted); font-size: 12px; }
       .footer { display: flex; justify-content: space-between; gap: 16px; margin-top: 20px; color: var(--muted); font-size: 11px; }
 
       @media (max-width: 700px) {
@@ -122,7 +197,9 @@
         .metric:nth-child(-n + 2) { border-bottom: 1px solid #416257; }
         .server { padding: 15px; }
         .server-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: 10px; }
+        .profile-control { grid-template-columns: 1fr; gap: 12px; }
         .config-grid { grid-template-columns: 1fr 1fr; }
+        .log-table { min-width: 650px; }
       }
       @media (max-width: 420px) {
         .top-meta .inspector-port { display: none; }
@@ -150,6 +227,19 @@
           <p class="subtitle">Live MCP connectivity and capability counts for configured endpoints.</p>
         </section>
 
+        <section class="profile-control" aria-label="MCP server profile">
+          <div>
+            <label for="profile-select">Active server profile</label>
+            <select id="profile-select" disabled aria-describedby="profile-feedback">
+              <option>Loading profiles...</option>
+            </select>
+          </div>
+          <div>
+            <strong id="profile-description" class="profile-description">Loading configuration</strong>
+            <span id="profile-feedback" class="profile-feedback" aria-live="polite">Selecting a profile reconnects Inspector and resets statistics.</span>
+          </div>
+        </section>
+
         <section id="summary" class="summary" aria-label="Aggregate statistics">
           <div class="metric"><span class="metric-label">Servers online</span><strong id="online-value" class="metric-value">-</strong></div>
           <div class="metric"><span class="metric-label">Tools</span><strong id="tools-value" class="metric-value">-</strong></div>
@@ -171,12 +261,43 @@
             <span class="section-note">Inspector UI runs on port 5173</span>
           </div>
           <div class="config-grid">
-            <div class="config-item"><span>Dashboard address</span><strong id="dashboard-address">-</strong></div>
-            <div class="config-item"><span>Refresh interval</span><strong id="poll-interval">-</strong></div>
+            <div class="config-item"><span>Selected profile</span><strong id="active-profile">-</strong></div>
+            <div class="config-item"><span>Inspector process</span><strong id="inspector-status">-</strong></div>
             <div class="config-item"><span>Monitor uptime</span><strong id="uptime">-</strong></div>
           </div>
         </section>
+
+        <section aria-labelledby="activity-title">
+          <div class="section-head">
+            <h2 id="activity-title">Application activity</h2>
+            <span id="activity-note" class="section-note">Lifecycle and status events</span>
+          </div>
+          <div class="log-frame">
+            <table class="log-table">
+              <thead><tr><th>Time</th><th>Level</th><th>Event</th><th>Details</th></tr></thead>
+              <tbody id="activity-rows"></tbody>
+            </table>
+            <div id="activity-empty" class="log-empty">Waiting for application events.</div>
+          </div>
+        </section>
       </main>
+
+      <dialog id="credential-dialog" class="credential-dialog" aria-labelledby="credential-title" aria-describedby="credential-description">
+        <form id="credentials-form" class="credential-form">
+          <div>
+            <p class="eyebrow">Profile credentials</p>
+            <h2 id="credential-title">Credentials required</h2>
+          </div>
+          <p id="credential-description">Enter credentials for this MCP server. Values are encrypted before they are saved.</p>
+          <div id="credential-fields" class="credential-fields"></div>
+          <p id="credential-storage-note" class="credential-storage-note"></p>
+          <p id="credential-error" class="credential-error" role="alert"></p>
+          <div class="credential-actions">
+            <button id="credential-cancel" type="button">Cancel</button>
+            <button id="credential-save" type="submit">Save securely and connect</button>
+          </div>
+        </form>
+      </dialog>
 
       <footer class="footer">
         <span id="updated-at">No status received yet</span>
@@ -187,6 +308,14 @@
     <script>
       const byId = (id) => document.getElementById(id);
       const number = new Intl.NumberFormat();
+      const profileSelect = byId("profile-select");
+      const credentialDialog = byId("credential-dialog");
+      const credentialsForm = byId("credentials-form");
+      let profiles = [];
+      let selectedProfileId = null;
+      let switchingProfile = false;
+      let credentialStorageReady = false;
+      let credentialProfileId = null;
 
       function addStat(container, label, value) {
         const item = document.createElement("div");
@@ -209,7 +338,7 @@
         const status = document.createElement("span");
         const dot = document.createElement("span");
         const stats = document.createElement("div");
-        const statusText = server.status === "online" ? "Online" : server.status === "checking" ? "Checking" : "Offline";
+        const statusText = server.status === "online" ? "Online" : server.status === "connecting" ? "Connecting" : "Offline";
 
         card.className = "server";
         head.className = "server-head";
@@ -250,10 +379,72 @@
         return card;
       }
 
+      function updateSelectedProfile(profile) {
+        if (!profile) return;
+        byId("profile-description").textContent = profile.description;
+        const missing = profile.missingEnv || [];
+        const required = profile.requiredEnv || [];
+        const feedback = byId("profile-feedback");
+        feedback.className = `profile-feedback${missing.length ? " error" : ""}`;
+        feedback.textContent = missing.length
+          ? `Missing credentials: ${missing.join(", ")}. Select this profile to enter them securely.`
+          : required.length
+            ? "Credentials are available."
+            : "No API credentials required.";
+      }
+
+      async function loadProfiles() {
+        const response = await fetch("/api/profiles", { cache: "no-store" });
+        if (!response.ok) throw new Error(`Profiles API returned ${response.status}`);
+        const data = await response.json();
+        profiles = data.profiles;
+        credentialStorageReady = data.credentialStorageReady;
+        profileSelect.replaceChildren(...profiles.map((profile) => {
+          const option = document.createElement("option");
+          option.value = profile.id;
+          option.textContent = `${profile.name}${profile.missingEnv.length ? " (credentials missing)" : ""}`;
+          return option;
+        }));
+        selectedProfileId = data.selected;
+        if (selectedProfileId) profileSelect.value = selectedProfileId;
+        updateSelectedProfile(profiles.find((profile) => profile.id === profileSelect.value));
+        profileSelect.disabled = false;
+      }
+
+      function renderLogs(logs) {
+        const rows = logs.map((entry) => {
+          const row = document.createElement("tr");
+          const time = document.createElement("td");
+          const levelCell = document.createElement("td");
+          const level = document.createElement("span");
+          const event = document.createElement("td");
+          const details = document.createElement("td");
+          time.className = "log-time";
+          time.textContent = new Date(entry.timestamp).toLocaleTimeString();
+          level.className = `log-level ${entry.level}`;
+          level.textContent = entry.level;
+          levelCell.append(level);
+          event.className = "log-event";
+          event.textContent = entry.event;
+          details.textContent = entry.message;
+          row.append(time, levelCell, event, details);
+          return row;
+        });
+        byId("activity-rows").replaceChildren(...rows);
+        byId("activity-empty").hidden = logs.length > 0;
+        byId("activity-note").textContent = `${logs.length} recent application events`;
+      }
+
       function duration(seconds) {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         return `${hours}h ${minutes}m`;
+      }
+
+      async function loadLogs() {
+        const response = await fetch("/api/logs", { cache: "no-store" });
+        if (!response.ok) throw new Error(`Activity API returned ${response.status}`);
+        renderLogs((await response.json()).logs);
       }
 
       async function refresh() {
@@ -263,17 +454,31 @@
           const data = await response.json();
           const summary = data.summary;
 
+          if (data.activeProfile && !switchingProfile && !credentialDialog.open) {
+            selectedProfileId = data.activeProfile.id;
+            profileSelect.value = selectedProfileId;
+            updateSelectedProfile(profiles.find((profile) => profile.id === selectedProfileId));
+          }
+
           byId("online-value").textContent = `${summary.onlineServers} / ${summary.totalServers}`;
           byId("tools-value").textContent = number.format(summary.totalTools);
           byId("resources-value").textContent = number.format(summary.totalResources);
           byId("prompts-value").textContent = number.format(summary.totalPrompts);
-          byId("poll-interval").textContent = `${data.pollIntervalMs / 1000}s`;
           byId("uptime").textContent = duration(data.uptimeSeconds);
-          byId("dashboard-address").textContent = window.location.host;
-          byId("connection-note").textContent = `${summary.onlineServers} of ${summary.totalServers} server${summary.totalServers === 1 ? "" : "s"} responding`;
+          byId("active-profile").textContent = data.activeProfile?.name || "Not selected";
+          byId("inspector-status").textContent = `${data.inspector.status}${data.inspector.pid ? ` · PID ${data.inspector.pid}` : ""}`;
+          byId("connection-note").textContent = data.switching
+            ? "Switching profile and resetting statistics"
+            : `${summary.onlineServers} of ${summary.totalServers} server${summary.totalServers === 1 ? "" : "s"} responding`;
           byId("updated-at").textContent = `Updated ${new Date(data.generatedAt).toLocaleTimeString()}`;
           byId("checks").textContent = `Checks ${number.format(summary.checks)} · failures ${number.format(summary.failures)}`;
-          byId("refresh-state").textContent = data.refreshing ? "Probe in progress" : "Live monitoring";
+          byId("refresh-state").textContent = data.switching
+            ? "Switching profile"
+            : data.refreshing
+              ? "Refreshing capabilities"
+              : data.inspector.status === "running" || data.inspector.status === "starting"
+                ? "Live monitoring"
+                : "Inspector stopped";
           byId("live-dot").classList.toggle("live", summary.onlineServers > 0);
           const list = byId("servers");
           list.replaceChildren(...data.servers.map(renderServer));
@@ -290,8 +495,130 @@
         }
       }
 
-      refresh();
-      setInterval(refresh, 5000);
+      async function switchProfile() {
+        const nextProfileId = profileSelect.value;
+        if (!nextProfileId || nextProfileId === selectedProfileId || switchingProfile) return;
+        switchingProfile = true;
+        profileSelect.disabled = true;
+        byId("profile-feedback").className = "profile-feedback";
+        byId("profile-feedback").textContent = "Stopping the previous server and reconnecting...";
+        try {
+          const response = await fetch("/api/profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profileId: nextProfileId }),
+          });
+          const result = await response.json();
+          if (response.status === 428) {
+            showCredentialsDialog(nextProfileId, result.missingEnv || []);
+            return;
+          }
+          if (!response.ok) throw new Error(result.error || `Profile switch returned ${response.status}`);
+          selectedProfileId = nextProfileId;
+          updateSelectedProfile(profiles.find((profile) => profile.id === selectedProfileId));
+          await refresh();
+        } catch (error) {
+          profileSelect.value = selectedProfileId || "";
+          byId("profile-feedback").className = "profile-feedback error";
+          byId("profile-feedback").textContent = error.message;
+        } finally {
+          switchingProfile = false;
+          profileSelect.disabled = false;
+          await refresh();
+          await loadLogs().catch(() => {});
+        }
+      }
+
+      function showCredentialsDialog(profileId, missingEnv) {
+        credentialProfileId = profileId;
+        const profile = profiles.find((item) => item.id === profileId);
+        byId("credential-title").textContent = `Credentials for ${profile?.name || profileId}`;
+        byId("credential-error").textContent = "";
+        byId("credential-fields").replaceChildren(...missingEnv.map((key) => {
+          const wrapper = document.createElement("div");
+          const label = document.createElement("label");
+          const input = document.createElement("input");
+          wrapper.className = "credential-field";
+          label.htmlFor = `credential-${key}`;
+          label.textContent = key;
+          input.id = `credential-${key}`;
+          input.name = key;
+          input.type = "password";
+          input.autocomplete = "new-password";
+          input.spellcheck = false;
+          input.required = true;
+          wrapper.append(label, input);
+          return wrapper;
+        }));
+
+        const storageNote = byId("credential-storage-note");
+        storageNote.className = `credential-storage-note${credentialStorageReady ? "" : " error"}`;
+        storageNote.textContent = credentialStorageReady
+          ? "Values are encrypted at rest. Keep CREDENTIALS_ENCRYPTION_KEY in a secret manager and persist the encrypted data volume."
+          : "Secure storage is not configured. Set CREDENTIALS_ENCRYPTION_KEY to a 64-character hex secret, then restart the service.";
+        byId("credential-save").disabled = !credentialStorageReady;
+        credentialDialog.showModal();
+        byId("credential-fields").querySelector("input")?.focus();
+      }
+
+      async function submitCredentials(event) {
+        event.preventDefault();
+        if (!credentialStorageReady || !credentialProfileId) return;
+        const saveButton = byId("credential-save");
+        const credentialValues = Object.fromEntries(
+          [...byId("credential-fields").querySelectorAll("input")].map((input) => [input.name, input.value]),
+        );
+        saveButton.disabled = true;
+        byId("credential-error").textContent = "";
+
+        try {
+          const response = await fetch("/api/credentials", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ profileId: credentialProfileId, credentials: credentialValues }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.error || `Credential save returned ${response.status}`);
+          selectedProfileId = credentialProfileId;
+          credentialsForm.reset();
+          credentialDialog.close();
+          credentialProfileId = null;
+          await loadProfiles();
+          await Promise.all([refresh(), loadLogs()]);
+        } catch (error) {
+          byId("credential-error").textContent = error.message;
+        } finally {
+          saveButton.disabled = !credentialStorageReady;
+        }
+      }
+
+      function cancelCredentials() {
+        credentialsForm.reset();
+        credentialDialog.close();
+        credentialProfileId = null;
+        profileSelect.value = selectedProfileId || "";
+        byId("credential-error").textContent = "";
+      }
+
+      profileSelect.addEventListener("change", switchProfile);
+      credentialsForm.addEventListener("submit", submitCredentials);
+      byId("credential-cancel").addEventListener("click", cancelCredentials);
+      credentialDialog.addEventListener("close", () => {
+        credentialsForm.reset();
+        credentialProfileId = null;
+        profileSelect.value = selectedProfileId || "";
+      });
+      loadProfiles()
+        .then(() => Promise.all([refresh(), loadLogs()]))
+        .catch((error) => {
+          byId("refresh-state").textContent = "Dashboard unavailable";
+          byId("profile-feedback").className = "profile-feedback error";
+          byId("profile-feedback").textContent = error.message;
+        });
+      setInterval(() => {
+        refresh();
+        loadLogs().catch(() => {});
+      }, 2000);
     </script>
   </body>
 </html>
