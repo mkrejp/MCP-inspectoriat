@@ -47,19 +47,24 @@ function createRemoteConfig() {
   };
 }
 
+function resolvePlaceholders(record, missing) {
+  for (const [key, value] of Object.entries(record ?? {})) {
+    if (typeof value !== "string") continue;
+    record[key] = value.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_match, name) => {
+      const resolved = process.env[name];
+      if (!resolved?.trim()) missing.add(name);
+      return resolved ?? "";
+    });
+  }
+}
+
 function resolveEnvironment(config, profile) {
   const missing = new Set();
   const servers = config.mcpServers ?? {};
 
   for (const server of Object.values(servers)) {
-    for (const [key, value] of Object.entries(server.env ?? {})) {
-      if (typeof value !== "string") continue;
-      server.env[key] = value.replace(/\$\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (_match, name) => {
-        const resolved = process.env[name];
-        if (!resolved?.trim()) missing.add(name);
-        return resolved ?? "";
-      });
-    }
+    resolvePlaceholders(server.env, missing);
+    resolvePlaceholders(server.headers, missing);
   }
 
   for (const key of profile.requiredEnv) {
