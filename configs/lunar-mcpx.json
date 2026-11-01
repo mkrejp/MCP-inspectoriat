@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "lunar-mcpx": {
+      "type": "http",
+      "url": "https://lunar-mcpx-production.up.railway.app/mcp",
+      "headers": {
+        "x-lunar-api-key": "${AUTH_KEY}"
+      }
+    }
+  }
+}

@@ -56,6 +56,14 @@
       "server": "fastmcp-aggregator",
       "config": "fastmcp-aggregator.json",
       "requiredEnv": []
+    },
+    {
+      "id": "lunar-mcpx",
+      "name": "Lunar MCPX",
+      "description": "Connect to the Railway-hosted Lunar MCPX gateway over Streamable HTTP.",
+      "server": "lunar-mcpx",
+      "config": "lunar-mcpx.json",
+      "requiredEnv": ["AUTH_KEY"]
     }
   ]
 }
