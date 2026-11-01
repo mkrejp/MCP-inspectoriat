@@ -1,12 +1,7 @@
 import { createServer } from "node:http";
 import { mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import {
-  Client,
-  SSEClientTransport,
-  StreamableHTTPClientTransport,
-} from "@modelcontextprotocol/client";
-import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/client/stdio";
+import { Client } from "@modelcontextprotocol/client";
 import {
   getProfileManifest,
   getProfiles,
@@ -15,6 +10,7 @@ import {
   prepareProfile,
   stopChild,
 } from "./profile-runtime.mjs";
+import { createMonitorTransport } from "./monitor-transport.mjs";
 import { saveStoredCredentials } from "./credentials-store.mjs";
 import { redactUrl } from "./targets.mjs";
 import {
@@ -125,20 +121,6 @@ function recordLog(level, event, message) {
     profile: activeProfile?.id ?? null,
   });
   if (eventLog.length > 200) eventLog.splice(0, eventLog.length - 200);
-}
-
-function createMonitorTransport(config) {
-  if (config.type === "stdio") {
-    return new StdioClientTransport({
-      command: config.command,
-      args: config.args,
-      cwd: config.cwd,
-      env: { ...getDefaultEnvironment(), ...(config.env ?? {}) },
-    });
-  }
-  if (config.type === "sse") return new SSEClientTransport(new URL(config.url));
-  if (config.type === "http") return new StreamableHTTPClientTransport(new URL(config.url));
-  throw new Error(`Unsupported MCP transport: ${config.type}`);
 }
 
 async function closeMonitor() {
