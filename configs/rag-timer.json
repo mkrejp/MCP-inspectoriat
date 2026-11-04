@@ -2,7 +2,10 @@
   "mcpServers": {
     "rag-timer": {
       "type": "http",
-      "url": "https://rag-timer-00001-production.up.railway.app/mcp"
+      "url": "https://rag-timer-00001-production.up.railway.app/mcp/",
+      "headers": {
+        "Authorization": "Bearer ${RAG_API_TOKEN}"
+      }
     }
   }
 }

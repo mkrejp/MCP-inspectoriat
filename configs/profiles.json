@@ -71,7 +71,7 @@
       "description": "Connect to the Railway-hosted FastMCP RAG timer over Streamable HTTP.",
       "server": "rag-timer",
       "config": "rag-timer.json",
-      "requiredEnv": []
+      "requiredEnv": ["RAG_API_TOKEN"]
     }
   ]
 }

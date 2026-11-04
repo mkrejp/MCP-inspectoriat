@@ -93,7 +93,8 @@ npm run inspect:profile -- github
 launcher. Each profile is read-only to Inspector. Local stdio profiles launch
 one server with `npx -y`; the FastMCP aggregator, Lunar MCPX, and RAG timer
 profiles connect over Streamable HTTP to their Railway-hosted endpoints. Lunar
-MCPX requires `AUTH_KEY` (sent as the `x-lunar-api-key` header).
+MCPX requires `AUTH_KEY` (sent as the `x-lunar-api-key` header). RAG timer
+requires `RAG_API_TOKEN` (sent as `Authorization: Bearer`).
 
 The requested `@modelcontextprotocol/server-fetch` package currently returns
 npm 404 (checked 2026-10-30). Its profile is included as specified, but it will
