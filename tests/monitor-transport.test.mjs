@@ -41,6 +41,33 @@ test("streamable HTTP monitor sends the resolved lunar API key header", async ()
   assert.deepEqual(headerValues, ["stored-auth-key"]);
 });
 
+test("streamable HTTP monitor sends the resolved Authorization Bearer header", async () => {
+  /** @type {string[]} */
+  const headerValues = [];
+  const server = createServer((request, response) => {
+    headerValues.push(request.headers.authorization ?? "");
+    rejectUnauthorized(request, response);
+  });
+  await new Promise((resolve) => {
+    server.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  assert.ok(address && typeof address === "object");
+
+  const client = new Client({ name: "monitor-transport-test", version: "1.0.0" });
+  const transport = createMonitorTransport({
+    type: "http",
+    url: `http://127.0.0.1:${address.port}/mcp/`,
+    headers: { Authorization: "Bearer test-token" },
+  });
+
+  await assert.rejects(client.connect(transport));
+  await client.close().catch(() => {});
+  server.close();
+
+  assert.deepEqual(headerValues, ["Bearer test-token"]);
+});
+
 test("streamable HTTP monitor omits the header when the profile has none", async () => {
   /** @type {Array<string | undefined>} */
   const headerValues = [];
