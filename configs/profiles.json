@@ -64,6 +64,14 @@
       "server": "lunar-mcpx",
       "config": "lunar-mcpx.json",
       "requiredEnv": ["AUTH_KEY"]
+    },
+    {
+      "id": "rag-timer",
+      "name": "RAG timer",
+      "description": "Connect to the Railway-hosted FastMCP RAG timer over Streamable HTTP.",
+      "server": "rag-timer",
+      "config": "rag-timer.json",
+      "requiredEnv": []
     }
   ]
 }

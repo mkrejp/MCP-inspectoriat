@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "rag-timer": {
+      "type": "http",
+      "url": "https://rag-timer-00001-production.up.railway.app/mcp"
+    }
+  }
+}
