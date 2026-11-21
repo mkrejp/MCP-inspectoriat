@@ -14,6 +14,7 @@
     "inspect:fastmcp-aggregator": "node scripts/start-inspector.mjs fastmcp-aggregator",
     "inspect:lunar-mcpx": "node scripts/start-inspector.mjs lunar-mcpx",
     "inspect:rag-timer": "node scripts/start-inspector.mjs rag-timer",
+    "inspect:mcpserv-dev-lodge": "node scripts/start-inspector.mjs mcpserv-dev-lodge",
     "dashboard": "node scripts/dashboard-server.mjs",
     "start": "node scripts/dashboard-server.mjs"
   },

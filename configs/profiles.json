@@ -72,6 +72,14 @@
       "server": "rag-timer",
       "config": "rag-timer.json",
       "requiredEnv": ["RAG_API_TOKEN"]
+    },
+    {
+      "id": "mcpserv-dev-lodge",
+      "name": "MCPServ Dev Lodge",
+      "description": "Connect to the Railway-hosted read-only MCP gateway to RAG 00002 (rag-artnouveau) over Streamable HTTP.",
+      "server": "mcpserv-dev-lodge",
+      "config": "mcpserv-dev-lodge.json",
+      "requiredEnv": ["MCPSERV_DEV_LODGE_TOKEN"]
     }
   ]
 }

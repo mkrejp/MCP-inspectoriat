@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mcpserv-dev-lodge": {
+      "type": "http",
+      "url": "https://mcpserv-dev-lodge-production.up.railway.app/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MCPSERV_DEV_LODGE_TOKEN}"
+      }
+    }
+  }
+}
